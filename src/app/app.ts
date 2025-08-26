@@ -7,7 +7,12 @@ import { NgModelInput } from './ngmodel-input';
   selector: 'app-root',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [FormsModule, ReactiveFormsModule, AppInput, NgModelInput],
-  template: ` <app-input label="test" name="yay" [formControl]="ctrl" /> {{ ctrl.value }}`,
+  template: `
+    <app-input label="test" name="yay" [(ngModel)]="title" [required]="true" />
+    {{ title() }}
+    <app-input label="test2" name="yay2" [formControl]="ctrl" />
+    {{ ctrl.value }}
+  `,
 })
 export class App {
   protected readonly title = signal('demo');

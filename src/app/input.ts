@@ -11,7 +11,6 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
-  AbstractControl,
   AsyncValidatorFn,
   ControlValueAccessor,
   FormControl,
@@ -76,24 +75,25 @@ export class AppInput implements ControlValueAccessor, OnInit {
   }
 
   ngOnInit() {
-    this.setValidators(
-      this.ngControl?.control?.validator,
-      this.ngControl?.control?.asyncValidator,
-      this.ngControl?.control
-    );
+    this.setValidators(this.ngControl?.control?.validator, this.ngControl?.control?.asyncValidator);
   }
 
   private setValidators(
     validators?: ValidatorFn | null,
-    asyncValidators?: AsyncValidatorFn | null,
-    parentControl?: AbstractControl | null
+    asyncValidators?: AsyncValidatorFn | null
   ) {
     this.control.clearValidators();
     this.control.clearAsyncValidators();
     this.control.setValidators(validators ?? null);
     this.control.setAsyncValidators(asyncValidators ?? null);
     this.control.updateValueAndValidity({ emitEvent: false });
-    this.isRequired.set(parentControl?.hasValidator(Validators.required) ?? false); // required should be separate to add material * after label
+
+    const ctrl = new FormControl(null, {
+      validators,
+    });
+    ctrl.markAsTouched();
+    ctrl.setValue(null);
+    this.isRequired.set(!!validators?.(new FormControl(null))?.['required']); // required should be separate to add material * after label
   }
 
   // be careful with CVA components, as angular will always pass in null on form init, so we need to support it either here by mapping this.value.set(value ?? '') or by the value signal supporting null
@@ -108,7 +108,10 @@ export class AppInput implements ControlValueAccessor, OnInit {
     this.changeSub.unsubscribe();
     this.changeSub = this.control.valueChanges
       .pipe(takeUntilDestroyed(this.destroy))
-      .subscribe((v) => fn(v));
+      .subscribe((v) => {
+        fn(v);
+        console.log(this.control.errors);
+      });
   }
 
   registerOnTouched(fn: () => void): void {
